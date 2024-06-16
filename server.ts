@@ -1,11 +1,13 @@
 import express, { Request, Response } from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 const app = express();
 const PORT = process.env.SERVER_PORT || 4000;
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/weather/:country', async (req: Request, res: Response) => {
