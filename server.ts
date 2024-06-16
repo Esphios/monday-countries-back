@@ -1,18 +1,22 @@
-const express = require('express');
-const axios = require('axios');
-const app = express();
-require('dotenv').config();
+import express, { Request, Response } from 'express';
+import axios from 'axios';
+import dotenv from 'dotenv';
 
+dotenv.config();
+const app = express();
 const PORT = process.env.SERVER_PORT || 4000;
 
 app.use(express.json());
 
-app.get('/weather/:country', async (req, res) => {
-    const country = req.params.country;
+app.get('/weather/:country', async (req: Request, res: Response) => {
+    const country = req.params.country as string;
 
     try {
         const apiKey = process.env.WEATHER_API_KEY;
-        console.log(apiKey)
+        if (!apiKey) {
+            throw new Error('Weather API key not found');
+        }
+
         const apiUrl = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${country}`;
 
         const response = await axios.get(apiUrl);

@@ -45,7 +45,7 @@ npm start
 Example:
 
 ```bash
-curl http://localhost:4000/weather/USA
+curl http://localhost:4000/weather/Germany
 ```
 This will return a JSON response with the current weather information for the specified country.
 

@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "moduleResolution": "node", 
+        "esModuleInterop": true, 
+        "resolveJsonModule": true, 
+        "target": "ESNext",
+        "module": "ESNext",
+        "outDir": "./dist",
+        "strict": true
+    },
+    "include": [
+        "server.ts"
+    ]
+}
