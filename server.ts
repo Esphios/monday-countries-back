@@ -5,29 +5,56 @@ import cors from 'cors';
 
 dotenv.config();
 const app = express();
-const PORT = process.env.SERVER_PORT || 4000;
+const PORT = Number(process.env.SERVER_PORT || 4000);
+const WEATHER_API_URL = 'https://api.weatherapi.com/v1/current.json';
+
+const weatherClient = axios.create({
+    baseURL: WEATHER_API_URL,
+    timeout: 5000,
+    headers: {
+        Accept: 'application/json',
+    },
+});
+
+function normalizeQuery(rawValue: string): string | null {
+    const decodedValue = decodeURIComponent(rawValue).trim();
+    if (!decodedValue || decodedValue.length > 120) {
+        return null;
+    }
+
+    return decodedValue;
+}
 
 app.use(cors());
 app.use(express.json());
 
 app.get('/weather/:country', async (req: Request, res: Response) => {
-    const country = req.params.country as string;
+    const query = normalizeQuery(req.params.country as string);
+    if (!query) {
+        res.status(400).json({ error: 'Country or coordinates are required' });
+        return;
+    }
 
     try {
         const apiKey = process.env.WEATHER_API_KEY;
         if (!apiKey) {
-            throw new Error('Weather API key not found');
+            console.error('WEATHER_API_KEY is not configured.');
+            res.status(500).json({ error: 'Weather API key not configured' });
+            return;
         }
 
-        const apiUrl = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${country}`;
-
-        const response = await axios.get(apiUrl);
+        const response = await weatherClient.get('', {
+            params: {
+                key: apiKey,
+                q: query,
+            },
+        });
         const weatherData = response.data;
 
         const reducedData = {
             temperature: weatherData.current.temp_c,
             condition: weatherData.current.condition.text,
-            icon: 'https:' + weatherData.current.condition.icon,
+            icon: `https:${weatherData.current.condition.icon}`,
             wind_speed_kph: weatherData.current.wind_kph,
             wind_direction: weatherData.current.wind_dir
         };
@@ -35,7 +62,12 @@ app.get('/weather/:country', async (req: Request, res: Response) => {
         res.json(reducedData);
     } catch (error) {
         console.error('Error fetching weather data:', error);
-        res.status(500).json({ error: 'Could not fetch weather data' });
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+            res.status(404).json({ error: 'Location not found' });
+            return;
+        }
+
+        res.status(502).json({ error: 'Could not fetch weather data' });
     }
 });
 
